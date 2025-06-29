@@ -1,0 +1,39 @@
+name: CI - Code Coverage Check
+
+on:
+  push:
+    branches:
+      - main   # ✅ Only when code is pushed/merged to main
+  pull_request:
+    branches:
+      - main   # ✅ Also runs on PR targeting main (useful for visibility before merging)
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Build and run tests with JaCoCo
+        run: mvn clean verify jacoco:report
+
+      - name: Check code coverage
+        run: |
+          echo "Checking code coverage..."
+          LINE_COVERAGE=$(grep -oPm1 "(?<=<line-rate>)[^<]+" target/site/jacoco/jacoco.xml)
+          echo "Line coverage: $(echo "$LINE_COVERAGE * 100" | bc)%"
+          LINE_COVERAGE_INT=$(echo "$LINE_COVERAGE * 100" | bc | cut -d'.' -f1)
+          if [ "$LINE_COVERAGE_INT" -lt 80 ]; then
+            echo "❌ Code coverage ($LINE_COVERAGE_INT%) is below threshold (80%)"
+            exit 1
+          else
+            echo "✅ Code coverage check passed: $LINE_COVERAGE_INT%"
+          fi
