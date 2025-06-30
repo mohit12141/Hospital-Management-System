@@ -2,7 +2,7 @@ package com.hospital.management.service;
 
 import com.hospital.management.dto.PatientDTO;
 import com.hospital.management.entity.Patient;
-import com.hospital.management.mapper.PatientMapper;
+// import com.hospital.management.mapper.PatientMapper;
 import com.hospital.management.repository.PatientRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,8 +27,8 @@ public class PatientServiceImplTest {
     @Autowired
     private PatientRepository patientRepository;
 
-    @Autowired
-    private PatientMapper patientMapper;
+    // @Autowired
+    // private PatientMapper patientMapper;
 
     private Patient savedPatient;
 
@@ -60,6 +60,17 @@ public class PatientServiceImplTest {
         assertEquals("John Doe", patientDTO.getName());
         assertEquals(30, patientDTO.getAge());
     }
+    
+    @Test
+    void testGetPatientById_IdNotFound(){
+        Long invalidId = 999L;
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            patientService.getPatientById(invalidId);
+        });
+        
+        assertEquals("Patient not found with Id " + invalidId, exception.getMessage());
+    }
 
     @Test
     void testCreatePatient() {
@@ -79,6 +90,38 @@ public class PatientServiceImplTest {
     }
 
     @Test
+    void updatePatient() {
+        PatientDTO newPatient = new PatientDTO();
+        // newPatient.setId(1L);
+        newPatient.setName("Alice Smith");
+        newPatient.setAge(25);
+        newPatient.setGender("Female");
+
+        PatientDTO savedDTO = patientService.createPatient(newPatient);
+
+        savedDTO.setName("Bob Marley");
+        savedDTO.setAge(23);
+        savedDTO.setGender("Male");
+
+        PatientDTO updatedPatient = patientService.updatePatient(savedDTO.getId(), savedDTO);
+
+        assertEquals(savedDTO.getName(), updatedPatient.getName());
+        assertEquals(savedDTO.getAge(), updatedPatient.getAge());
+        assertEquals(savedDTO.getGender(), updatedPatient.getGender());
+    }
+    
+    @Test
+    void testUpdatePatient_WhenPatientDoesNotExist(){
+        Long invalidId = 999L;
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            patientService.updatePatient(invalidId, null);
+        });
+
+        assertEquals("Patient not found with Id " + invalidId, exception.getMessage());
+    }
+
+    @Test
     void testDeletePatient() {
         Long id = savedPatient.getId();
 
@@ -86,4 +129,17 @@ public class PatientServiceImplTest {
 
         assertFalse(patientRepository.findById(id).isPresent());
     }
+
+    @Test
+    void testDeletePatient_WhenPatientDoesNotExist_ShouldThrowException(){
+        Long nonExistentId = 999L;
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            patientService.deletePatient(nonExistentId);
+        });                                   
+
+        assertEquals("Patient not found with Id " + nonExistentId, exception.getMessage());
+    }
+
+
 }

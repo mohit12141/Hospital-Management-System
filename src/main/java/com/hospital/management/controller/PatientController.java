@@ -20,8 +20,7 @@ import com.hospital.management.service.PatientService;
 public class PatientController {
     
     private PatientService patientService;
-
-    @Autowired
+    
     public PatientController(PatientService patientService){
         this.patientService = patientService;
     }
