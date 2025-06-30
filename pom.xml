@@ -99,20 +99,32 @@
                 <version>0.8.10</version>
                 <executions>
                     <execution>
-                        <id>prepare-agent</id>
-                        <goals>
-                            <goal>prepare-agent</goal>
-                        </goals>
+                    <id>prepare-agent</id>
+                    <goals>
+                        <goal>prepare-agent</goal>
+                    </goals>
                     </execution>
                     <execution>
-                        <id>report</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report</goal>
-                        </goals>
+                    <id>report</id>
+                    <phase>verify</phase>
+                    <goals>
+                        <goal>report</goal>
+                    </goals>
+                    <configuration>
+                        <outputDirectory>${project.reporting.outputDirectory}/jacoco</outputDirectory>
+                        <dataFile>${project.build.directory}/jacoco.exec</dataFile>
+                        <outputEncoding>UTF-8</outputEncoding>
+                        <formats>
+                        <format>XML</format>
+                        <format>HTML</format>
+                        <format>CSV</format>
+                        </formats>
+                    </configuration>
                     </execution>
                 </executions>
-            </plugin>
+                </plugin>
+
+
         </plugins>
     </build>
 

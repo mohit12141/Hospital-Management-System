@@ -3,10 +3,10 @@ name: CI - Code Coverage Check
 on:
   push:
     branches:
-      - main   # ✅ Only when code is pushed/merged to main
+      - main
   pull_request:
     branches:
-      - main   # ✅ Also runs on PR targeting main (useful for visibility before merging)
+      - main
 
 jobs:
   test:
@@ -25,15 +25,35 @@ jobs:
       - name: Build and run tests with JaCoCo
         run: mvn clean verify jacoco:report
 
-      - name: Check code coverage
+      - name: Check code coverage using CSV
         run: |
-          echo "Checking code coverage..."
-          LINE_COVERAGE=$(grep -oPm1 "(?<=<line-rate>)[^<]+" target/site/jacoco/jacoco.xml)
-          echo "Line coverage: $(echo "$LINE_COVERAGE * 100" | bc)%"
-          LINE_COVERAGE_INT=$(echo "$LINE_COVERAGE * 100" | bc | cut -d'.' -f1)
-          if [ "$LINE_COVERAGE_INT" -lt 80 ]; then
-            echo "❌ Code coverage ($LINE_COVERAGE_INT%) is below threshold (80%)"
+          echo "Checking code coverage from CSV..."
+          CSV_FILE="target/site/jacoco/jacoco.csv"
+
+          if [ ! -f "$CSV_FILE" ]; then
+            echo "❌ CSV file not found!"
+            exit 1
+          fi
+
+          # Extract coverage from first actual class entry (skip header)
+          LINE=$(tail -n +2 "$CSV_FILE" | head -n 1)
+
+          MISSED=$(echo "$LINE" | cut -d',' -f4)
+          COVERED=$(echo "$LINE" | cut -d',' -f5)
+
+          TOTAL=$((MISSED + COVERED))
+
+          if [ "$TOTAL" -eq 0 ]; then
+            PERCENT=0
+          else
+            PERCENT=$(( 100 * COVERED / TOTAL ))
+          fi
+
+          echo "🟡 Code Coverage: $PERCENT%"
+
+          if [ "$PERCENT" -lt 80 ]; then
+            echo "❌ Code coverage ($PERCENT%) is below threshold (80%)"
             exit 1
           else
-            echo "✅ Code coverage check passed: $LINE_COVERAGE_INT%"
+            echo "✅ Code coverage check passed: $PERCENT%"
           fi
